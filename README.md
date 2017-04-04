@@ -5,7 +5,7 @@
 ```
 $ virtualenv flask
 $ source flask/bin/activate
-$ pip install -r requirements
+$ pip install -r requirements.txt
 ```
 
 ### Start Server
