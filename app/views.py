@@ -10,16 +10,16 @@ def index():
 
 @app.route('/update', methods=['GET','POST'])
 def update():
-    import pdb; pdb.set_trace()
     if request.method == 'POST':
         user = request.args.get('user')
         vector = request.args.get('vector')
 
-        # 'A'
-        # np.array([.1,.2,.3,.5])
+
+        import pdb; pdb.set_trace()
 
         fm = FeatureMatrix()
 
+        # nearest_neighbor = fm.match('A', np.array([.1,.2,.3,.5]))
         nearest_neighbor = fm.match(user, vector)
 
         return jsonify(result='Success',
