@@ -10,11 +10,15 @@ $ pip install -r requirements
 
 ### Start Server
 
+Start the Flask server in the virtual environment
+
 ```
 $ ./run.py
 ```
 
 ### Interact with Server
+
+In a new terminal window, run the following:
 
 ```
 $ import requests
