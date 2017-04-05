@@ -4,13 +4,15 @@ import requests
 import random
 import string
 
-endpoint = 'http://127.0.0.1:5000/update' 
+endpoint = 'http://127.0.0.1:5000'
 
 class user(object):
 
     def __init__(self,username):
+        global endpoint
         self.name = username;
         self.id = 'A'
+        self.password='X'
         #self.id = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(10))
         self.vector = [.1,.2,.3,.5]
         self.attrs = {
@@ -25,6 +27,11 @@ class user(object):
         'DiseaseDuration': None,
         'OtherData' : None
         }
+        try:
+            requests.post(endpoint+'/register',data={'user':self.id, 'password': self.password})
+            requests.post(endpoint+'/login',data={'user':self.id, 'password': self.password})
+        except:
+            None
     
     def collect_data(self):
         """
@@ -49,7 +56,7 @@ class user(object):
         global endpoint
         request_vector = ', '.join([str(y) for y in self.vector])
         try:
-            resp = requests.post(endpoint,data={'user':self.id, 'vector': request_vector})
+            resp = requests.post(endpoint+'/update',data={'user':self.id, 'vector': request_vector})
             print(resp.json())
         except:
             print("Unable to update upstream server")
