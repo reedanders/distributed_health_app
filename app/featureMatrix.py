@@ -43,7 +43,10 @@ class FeatureMatrix(object):
     # TODO Return list of nearest neighbors, not single neighbor
     def _findNeighbors(self, user_index):
         all_neighbors = distance.pdist(self.matrix, 'euclidean')
-        top_match = np.argmax(\
-            distance_matrix(self.matrix, self.matrix)[user_index])
+        d_matrix = distance_matrix(self.matrix, self.matrix)[user_index]
+        d_matrix = d_matrix.tolist()[0]
 
-        return self.user_list[top_match]
+        _min = min(i for i in d_matrix if i > 0)
+        neighbor = d_matrix.index(_min)
+
+        return self.user_list[neighbor]
