@@ -50,9 +50,9 @@ class user(object):
         request_vector = ', '.join([str(y) for y in self.vector])
         try:
             resp = requests.post(endpoint,data={'user':self.id, 'vector': request_vector})
+            print(resp.json())
         except:
             print("Unable to update upstream server")
-        print(resp.json())
         
 
 hackwa = user("hackwa")
