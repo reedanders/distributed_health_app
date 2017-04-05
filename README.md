@@ -5,7 +5,7 @@
 ```
 $ virtualenv flask
 $ source flask/bin/activate
-$ pip install -r requirements
+$ pip install -r requirements.txt
 ```
 
 ### Start Server
@@ -21,6 +21,8 @@ $ ./run.py
 In a new terminal window, run the following:
 
 ```
-$ import requests
-$ requests.post('http://127.0.0.1:5000/update', data = {'user':'A', 'vector':'.1,.2,.3,.5'})
+$ python3
+>>> import requests
+>>> response = requests.post('http://127.0.0.1:5000/update', data = {'user':'A', 'vector':'.1,.2,.3,.5'})
+>>> response.json()
 ```
