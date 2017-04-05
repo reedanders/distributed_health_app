@@ -23,5 +23,6 @@ In a new terminal window, run the following:
 ```
 $ python3
 >>> import requests
->>> requests.post('http://127.0.0.1:5000/update', data = {'user':'A', 'vector':'.1,.2,.3,.5'})
+>>> response = requests.post('http://127.0.0.1:5000/update', data = {'user':'A', 'vector':'.1,.2,.3,.5'})
+>>> response.json()
 ```
