@@ -12,6 +12,7 @@ def index():
 @app.route('/update', methods=['POST'])
 def update():
     if request.method == 'POST':
+
         user = request.values['user']
 
         vector = request.values['vector']
@@ -22,4 +23,4 @@ def update():
         nearest_neighbor = fm.match(user, vector)
 
         return jsonify(result='Success',
-                            data=nearest_neighbor)
+                            neighbor=nearest_neighbor)
