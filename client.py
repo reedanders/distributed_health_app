@@ -60,6 +60,15 @@ class user(object):
             print(resp.json())
         except:
             print("Unable to update upstream server")
+
+    def get_ip_list(self):
+        global endpoint
+        requestd = {'user' : self.id, 'userids':['A','B']}
+#        try:
+        resp = requests.post(endpoint+'/getips',data=requestd)
+        print(resp.json())
+#        except:
+#            print("Unable to update upstream server")
         
 
 hackwa = user("hackwa")
@@ -68,3 +77,5 @@ hackwa.collect_data()
 hackwa.update_server()
 print(hackwa.attrs)
 print(list(hackwa.attrs.values()))
+print("Get IP list for userids: [A,B]")
+hackwa.get_ip_list()
