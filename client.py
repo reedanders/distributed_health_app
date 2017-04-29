@@ -3,7 +3,9 @@
 import requests
 import random
 import string
+import threading
 import sys
+from time import sleep
 
 endpoint = 'http://127.0.0.1:5000'
 
@@ -29,16 +31,25 @@ class user(object):
         'OtherData' : None
         }
         self.kvstore={}
+        self.stop_polling = 0
 
     def register(self):
         try:
-            requests.post(endpoint+'/register',data={'user':self.id, 'password': self.password})
+            r = requests.post(endpoint+'/register',data={'user':self.id, 'password': self.password})
+            if r.status_code == 200:
+                print("Registered with server")
+            else:
+                print("Register Failed")
         except:
             print("Register Failed")
 
     def login(self):
         try:
-            requests.post(endpoint+'/register',data={'user':self.id, 'password': self.password})
+            r = requests.post(endpoint+'/login',data={'user':self.id, 'password': self.password})
+            if r.status_code == 200:
+                print("Login Successful")
+            else:
+                print("Login Failed")
         except:
             print("Login Failed")
 
@@ -64,14 +75,21 @@ class user(object):
 
     def update_server(self):
         global endpoint
-        request_vector = ', '.join([str(y) for y in self.vector])
-        try:
-            resp = requests.post(endpoint+'/update',data={'user':self.id, 'vector': request_vector})
-            self.kvstore = {}
-            for k in resp.json():
-                self.kvstore[k] = None
-        except:
-            print("Unable to update upstream server")
+        print("Starting background poll thread")
+        while True:
+            if self.stop_polling:
+                return
+            request_vector = ', '.join([str(y) for y in self.vector])
+            try:
+                resp = requests.post(endpoint+'/update',data={'user':self.id, 'vector': request_vector})
+                if resp.status_code == 200:
+                    self.kvstore = {}
+                    for k in resp.json():
+                        self.kvstore[k] = None
+                sleep(5)
+            except:
+                print("Unable to update upstream server")
+                sleep(5)
 
     def get_ip_list(self):
         global endpoint
@@ -99,8 +117,10 @@ def run():
     uname = input("Enter Username: ")
     upass = input("Enter Password for "+uname+": ")
     uobject = user(uname,upass)
+    uobject.collect_data()
     print("User Created Successfully!")
     print("Enter help for commandlist")
+    poller = None
     while(1):
         cmd = input(">>")
         if cmd == "help":
@@ -109,14 +129,20 @@ def run():
             uobject.register()
         elif cmd == "2":
             uobject.login()
+            if poller is None:
+                poller = threading.Thread(target=uobject.update_server)
+                poller.start()
         elif cmd == "3":
-            printf(uobject.kvstore)
+            print(uobject.kvstore)
         elif cmd == "4":
+            None
+        elif cmd == "5":
             print("Profile for",uname,":")
             print(uobject.attrs)
-        elif cmd == "5":
-            None
         elif cmd == "6":
+            uobject.stop_polling = 1
+            print("Waiting for poll thread to exit")
+            poller.join()
             sys.exit(0)
 
 
