@@ -113,23 +113,24 @@ class user(object):
             print("Unable to update upstream server")
 
     def get_messages(self):
-        global endpoint
-        try:
-            resp = requests.get(endpoint+'/getmessages', data={'user':self.id})
-            if resp.status_code == 200:
-                msgDict = {}
-                msgList = resp.json()['messages']
-                for msgData in msgList:
-                    sender, msg = json.loads(msgData).popitem()
-                    if sender not in msgDict:
-                        msgDict[sender] = []
-                    msgDict[sender].append(msg)
-                for sender,msgList in msgDict:
-                    chat_history_update(sender,msgList)
-
-
-        except:
-            print("Unable to update upstream server")
+        global endpoin
+        while True:
+            if self.stop_polling:
+                return
+            try:
+                resp = requests.get(endpoint+'/getmessages', data={'user':self.id})
+                if resp.status_code == 200:
+                    msgDict = {}
+                    msgList = resp.json()['messages']
+                    for msgData in msgList:
+                        sender, msg = json.loads(msgData).popitem()
+                        if sender not in msgDict:
+                            msgDict[sender] = []
+                        msgDict[sender].append(msg)
+                    for sender,msgList in msgDict:
+                        chat_history_update(sender,msgList)
+            except:
+                print("Unable to update upstream server")
 
     def send_message(self, toUID, message):
         global endpoint
