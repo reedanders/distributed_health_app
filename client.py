@@ -5,16 +5,17 @@ import random
 import string
 import threading
 import sys
+import json
 from time import sleep
 
-endpoint = 'http://127.0.0.1:5000'
+endpoint = 'http://10.0.0.156:5000'#'http://127.0.0.1:5000'
 
 class user(object):
 
     def __init__(self,username,pwd):
         global endpoint
         self.name = username;
-        self.id = 'A'
+        self.id = username
         self.password=pwd
         #self.id = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(10))
         self.vector = [.1,.2,.3,.5]
@@ -99,10 +100,37 @@ class user(object):
             self.compat_ip_list = resp
             for k in resp.json.keys():
                 self.kvstore[k] = resp.json()[k]
-#        print(resp.json())
         except:
             print("Unable to update upstream server")
 
+    def get_messages(self):
+        global endpoint
+        try:
+            resp = requests.get(endpoint+'/getmessages', data={'user':self.id})
+            if resp.status_code == 200:
+                msgDict = {}
+                msgList = resp.json()['messages']
+                for msgData in msgList:
+                    sender, msg = json.loads(msgData).popitem()
+                    if sender not in msgDict:
+                        msgDict[sender] = []
+                    msgDict[sender].append(msg)
+                print(msgDict)
+        except:
+            print("Unable to update upstream server")
+
+    def send_message(self, toUID, message):
+        global endpoint
+        try:
+            resp = requests.post(endpoint+'/postmessages', data={'fromuser':self.id, 'touser':toUID, 'message':message})
+            if resp.status_code == 200 and resp.json()['result'] == "Success":
+                print("Message sent")
+            else:
+                print("Message not sent")
+        except:
+            print("Unable to update upstream server")
+
+       
 def showmenu():
     print("""
     1. Register
@@ -111,6 +139,8 @@ def showmenu():
     4. Chat with a User
     5. Show my profile
     6. Quit Application
+    7. Get chat messages
+    8. Send chat messages
 """)
 
 def run():
@@ -129,9 +159,9 @@ def run():
             uobject.register()
         elif cmd == "2":
             uobject.login()
-            if poller is None:
+            """if poller is None:
                 poller = threading.Thread(target=uobject.update_server)
-                poller.start()
+                poller.start()"""
         elif cmd == "3":
             print(uobject.kvstore)
         elif cmd == "4":
@@ -142,9 +172,14 @@ def run():
         elif cmd == "6":
             uobject.stop_polling = 1
             print("Waiting for poll thread to exit")
-            poller.join()
+            #poller.join()
             sys.exit(0)
-
+        elif cmd == '7':
+            uobject.get_messages()
+        elif cmd == '8':
+            UID = input("User ID of the user to send to:")
+            message = input("User input")
+            uobject.send_message(UID, message)
 
 if __name__=='__main__':
     run()
