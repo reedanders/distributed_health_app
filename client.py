@@ -7,9 +7,56 @@ import threading
 import sys
 import json
 from time import sleep
+import os
+import hashlib
 
 endpoint = 'http://10.0.0.156:5000'#'http://127.0.0.1:5000'
+def send_msg(usr_name):
+    msg = raw_input('Enter Message:')
+    file_name = str(hashlib.sha224(str(usr_name)).hexdigest())
+    f = open(file_name, 'a')
+    f.write(msg + '\n')
+    f.close()
+def chat_history_update(usr_name,msgs):
+    file_name = str(hashlib.sha224(str(usr_name)).hexdigest())
+    f = open(file_name, 'a')
+    for line in msgs:
+        f.write(usr_name + ": " + line + '\n')
+    f.close()
+def print_new_msgs(usr_name):
+    file_name = str(hashlib.sha224(str(usr_name)).hexdigest())
+    marker = 0
+    line_num = 0
 
+    f = open(file_name, 'r')
+    for line in f:
+        if marker == 1:
+            print(line)
+            continue
+        line_num = line_num + 1
+        if (line=="MARKER\n") & (marker == 0) :
+            marker = 1
+            continue
+    f.close()
+
+    list1 = []
+    if(line_num != 0) & (marker ==1):
+        with open(file_name,"r") as textobj:
+            list1 = list(textobj)
+        del list1[line_num - 1]
+        with open(file_name,"w") as textobj:
+            for n in list1:
+                textobj.write(n)
+
+    f = open(file_name, 'r')
+    if marker == 0:
+        for line in f:
+            print(line)
+    f.close()
+
+    f = open(file_name, 'a')
+    f.write("MARKER" + '\n')
+    f.close()
 class user(object):
 
     def __init__(self,username,pwd):
@@ -54,7 +101,7 @@ class user(object):
         except:
             print("Login Failed")
 
-    
+
     def collect_data(self):
         """
         Set Random Values For Now
@@ -104,20 +151,25 @@ class user(object):
             print("Unable to update upstream server")
 
     def get_messages(self):
-        global endpoint
-        try:
-            resp = requests.get(endpoint+'/getmessages', data={'user':self.id})
-            if resp.status_code == 200:
-                msgDict = {}
-                msgList = resp.json()['messages']
-                for msgData in msgList:
-                    sender, msg = json.loads(msgData).popitem()
-                    if sender not in msgDict:
-                        msgDict[sender] = []
-                    msgDict[sender].append(msg)
-                print(msgDict)
-        except:
-            print("Unable to update upstream server")
+        global endpoin
+        while True:
+            sleep(2)
+            if self.stop_polling:
+                return
+            try:
+                resp = requests.get(endpoint+'/getmessages', data={'user':self.id})
+                if resp.status_code == 200:
+                    msgDict = {}
+                    msgList = resp.json()['messages']
+                    for msgData in msgList:
+                        sender, msg = json.loads(msgData).popitem()
+                        if sender not in msgDict:
+                            msgDict[sender] = []
+                        msgDict[sender].append(msg)
+                    for sender,msgList in msgDict:
+                        chat_history_update(sender,msgList)
+            except:
+                print("Unable to update upstream server")
 
     def send_message(self, toUID, message):
         global endpoint
@@ -130,7 +182,7 @@ class user(object):
         except:
             print("Unable to update upstream server")
 
-       
+
 def showmenu():
     print("""
     1. Register
@@ -159,20 +211,28 @@ def run():
             uobject.register()
         elif cmd == "2":
             uobject.login()
-            """if poller is None:
-                poller = threading.Thread(target=uobject.update_server)
-                poller.start()"""
+            if poller is None:
+                poller = threading.Thread(target=uobject.get_messages)
+                poller.start()
         elif cmd == "3":
             print(uobject.kvstore)
         elif cmd == "4":
-            None
+            usr_name = raw_input('Enter Username: ')
+            p=os.fork()
+            if p == 0:
+                while(1):
+                    sleep(1)
+                    print_new_msgs(usr_name)
+            else:
+                while(1):
+                    send_msg(usr_name)
         elif cmd == "5":
             print("Profile for",uname,":")
             print(uobject.attrs)
         elif cmd == "6":
             uobject.stop_polling = 1
             print("Waiting for poll thread to exit")
-            #poller.join()
+            poller.join()
             sys.exit(0)
         elif cmd == '7':
             uobject.get_messages()
