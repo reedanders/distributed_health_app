@@ -9,54 +9,48 @@ import json
 from time import sleep
 import os
 import hashlib
+import subprocess
+import signal
 
-endpoint = 'http://10.0.0.156:5000'#'http://127.0.0.1:5000'
-def send_msg(usr_name):
-    msg = raw_input('Enter Message:')
-    file_name = str(hashlib.sha224(str(usr_name)).hexdigest())
+endpoint = 'http://127.0.0.1:5000'
+
+def alarm_handler(signum, frame):
+    raise Exception("TimeoutExpired")
+
+def input_with_timeout(timeout):
+    # set signal handler
+    signal.signal(signal.SIGALRM, alarm_handler)
+    signal.alarm(timeout) # produce SIGALRM in `timeout` seconds
+    try:
+        return input("")
+    except:
+        return None
+    finally:
+        signal.alarm(0) # cancel alarm
+
+def send_msg(usr_name, fromUsr, proc):
+    print('Enter message: ', end='')
+    msg = None
+    while True:
+        msg = input_with_timeout(1)
+        if proc.poll() is not None:
+            print("")
+            return None
+        elif msg is not None:
+            break
+    file_name = str(usr_name)
     f = open(file_name, 'a')
-    f.write(msg + '\n')
+    f.write(fromUsr + ': '+ msg + '\n')
     f.close()
+    return msg
+
 def chat_history_update(usr_name,msgs):
-    file_name = str(hashlib.sha224(str(usr_name)).hexdigest())
+    file_name = str(usr_name)
     f = open(file_name, 'a')
     for line in msgs:
         f.write(usr_name + ": " + line + '\n')
     f.close()
-def print_new_msgs(usr_name):
-    file_name = str(hashlib.sha224(str(usr_name)).hexdigest())
-    marker = 0
-    line_num = 0
 
-    f = open(file_name, 'r')
-    for line in f:
-        if marker == 1:
-            print(line)
-            continue
-        line_num = line_num + 1
-        if (line=="MARKER\n") & (marker == 0) :
-            marker = 1
-            continue
-    f.close()
-
-    list1 = []
-    if(line_num != 0) & (marker ==1):
-        with open(file_name,"r") as textobj:
-            list1 = list(textobj)
-        del list1[line_num - 1]
-        with open(file_name,"w") as textobj:
-            for n in list1:
-                textobj.write(n)
-
-    f = open(file_name, 'r')
-    if marker == 0:
-        for line in f:
-            print(line)
-    f.close()
-
-    f = open(file_name, 'a')
-    f.write("MARKER" + '\n')
-    f.close()
 class user(object):
 
     def __init__(self,username,pwd):
@@ -101,7 +95,6 @@ class user(object):
         except:
             print("Login Failed")
 
-
     def collect_data(self):
         """
         Set Random Values For Now
@@ -128,27 +121,29 @@ class user(object):
             if self.stop_polling:
                 return
             request_vector = ', '.join([str(y) for y in self.vector])
-            try:
+            #try:
+            if True:
                 resp = requests.post(endpoint+'/update',data={'user':self.id, 'vector': request_vector})
                 if resp.status_code == 200:
                     self.kvstore = {}
                     for k in resp.json():
                         self.kvstore[k] = None
                 sleep(5)
-            except:
-                print("Unable to update upstream server")
-                sleep(5)
+            #except:
+                #print("Update Server: Unable to update upstream server")
+                #sleep(5)
 
     def get_ip_list(self):
         global endpoint
         requestd = {'user' : self.id, 'userids':['A','B']}
-        try:
+        #try:
+        if True:
             resp = requests.post(endpoint+'/getips',data=requestd)
             self.compat_ip_list = resp
             for k in resp.json.keys():
                 self.kvstore[k] = resp.json()[k]
-        except:
-            print("Unable to update upstream server")
+        #except:
+            #print("Get IP: Unable to update upstream server")
 
     def get_messages(self):
         global endpoin
@@ -156,7 +151,8 @@ class user(object):
             sleep(2)
             if self.stop_polling:
                 return
-            try:
+            #try:
+            if True:
                 resp = requests.get(endpoint+'/getmessages', data={'user':self.id})
                 if resp.status_code == 200:
                     msgDict = {}
@@ -166,33 +162,31 @@ class user(object):
                         if sender not in msgDict:
                             msgDict[sender] = []
                         msgDict[sender].append(msg)
-                    for sender,msgList in msgDict:
+                    for sender, msgList in msgDict.items():
                         chat_history_update(sender,msgList)
-            except:
-                print("Unable to update upstream server")
+            #except:
+                #print("Get Message: Unable to update upstream server")
 
     def send_message(self, toUID, message):
         global endpoint
-        try:
+        #try:
+        if True:
             resp = requests.post(endpoint+'/postmessages', data={'fromuser':self.id, 'touser':toUID, 'message':message})
             if resp.status_code == 200 and resp.json()['result'] == "Success":
                 print("Message sent")
             else:
                 print("Message not sent")
-        except:
-            print("Unable to update upstream server")
+        #except:
+            #print("Send Message: Unable to update upstream server")
 
 
 def showmenu():
-    print("""
-    1. Register
+    print("""1. Register
     2. Login
     3. List Compatible Users
     4. Chat with a User
     5. Show my profile
     6. Quit Application
-    7. Get chat messages
-    8. Send chat messages
 """)
 
 def run():
@@ -217,15 +211,14 @@ def run():
         elif cmd == "3":
             print(uobject.kvstore)
         elif cmd == "4":
-            usr_name = raw_input('Enter Username: ')
-            p=os.fork()
-            if p == 0:
-                while(1):
-                    sleep(1)
-                    print_new_msgs(usr_name)
-            else:
-                while(1):
-                    send_msg(usr_name)
+            usr_name = input('Enter Username: ')
+            #os.system("x-terminal-emulator -e watch -t cat " + usr_name)
+            proc = subprocess.Popen(['gnome-terminal --disable-factory -x watch -t cat '+ usr_name], shell = True)
+            while(1):
+                msg = send_msg(usr_name, uobject.id, proc)
+                if msg == None:
+                    break
+                uobject.send_message(usr_name, msg)
         elif cmd == "5":
             print("Profile for",uname,":")
             print(uobject.attrs)
@@ -234,12 +227,6 @@ def run():
             print("Waiting for poll thread to exit")
             poller.join()
             sys.exit(0)
-        elif cmd == '7':
-            uobject.get_messages()
-        elif cmd == '8':
-            UID = input("User ID of the user to send to:")
-            message = input("User input")
-            uobject.send_message(UID, message)
 
 if __name__=='__main__':
     run()
