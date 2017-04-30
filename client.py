@@ -7,8 +7,17 @@ import threading
 import sys
 import json
 from time import sleep
+import os
+import hashlib
 
 endpoint = 'http://10.0.0.156:5000'#'http://127.0.0.1:5000'
+
+def chat_history_update(usr_name,msgs):
+    file_name = str(hashlib.sha224(str(usr_name)).hexdigest())
+    f = open(file_name, 'a')
+    for line in msgs:
+        f.write(usr_name + ": " + line + '\n')
+    f.close()
 
 class user(object):
 
@@ -54,7 +63,7 @@ class user(object):
         except:
             print("Login Failed")
 
-    
+
     def collect_data(self):
         """
         Set Random Values For Now
@@ -115,7 +124,10 @@ class user(object):
                     if sender not in msgDict:
                         msgDict[sender] = []
                     msgDict[sender].append(msg)
-                print(msgDict)
+                for sender,msgList in msgDict:
+                    chat_history_update(sender,msgList)
+
+
         except:
             print("Unable to update upstream server")
 
@@ -130,7 +142,7 @@ class user(object):
         except:
             print("Unable to update upstream server")
 
-       
+
 def showmenu():
     print("""
     1. Register
@@ -159,9 +171,9 @@ def run():
             uobject.register()
         elif cmd == "2":
             uobject.login()
-            """if poller is None:
-                poller = threading.Thread(target=uobject.update_server)
-                poller.start()"""
+            if poller is None:
+                poller = threading.Thread(target=uobject.get_messages)
+                poller.start()
         elif cmd == "3":
             print(uobject.kvstore)
         elif cmd == "4":
@@ -172,7 +184,7 @@ def run():
         elif cmd == "6":
             uobject.stop_polling = 1
             print("Waiting for poll thread to exit")
-            #poller.join()
+            poller.join()
             sys.exit(0)
         elif cmd == '7':
             uobject.get_messages()
