@@ -43,7 +43,7 @@ def login():
             if registered_ids[user] == pwd:
                 print("logging in",user)
                 logged_in.append(user)
-                r.set(user,str(remote_ip))
+                #r.set(user,str(remote_ip))
                 return jsonify(result='Success')
         else:
             abort(404)
@@ -83,8 +83,8 @@ def postmessages():
     fromuser = request.values['fromuser']
     touser = request.values['touser']
     message = request.values['message']
-    if touser not in logged_in:
-        abort(404)
+#    if touser not in logged_in:
+#        abort(404)
     if r.lpush(touser,json.dumps({fromuser:message})) > 0 :
         return jsonify(result='Success')
     else:
@@ -93,9 +93,10 @@ def postmessages():
 @app.route('/getmessages',methods=['GET'])
 def getmessages():
     user = str(request.values['user'])
+    print(user)
     resp = {'messages': []}
-    if user not in logged_in:
-        abort(404)
+#    if user not in logged_in:
+#        abort(404)
     while True:
         data = r.rpop(user)
         if data is not None:
