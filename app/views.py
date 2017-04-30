@@ -1,6 +1,7 @@
 from flask import request, jsonify,abort
 import numpy as np
 import redis
+import json
 
 from app import app
 from featureMatrix import FeatureMatrix
@@ -67,12 +68,37 @@ def register():
 
 @app.route('/getips',methods=['POST'])
 def getips():
-        user = request.values['user']
-        userids = request.values['userids']
-        print("username:",user)
-        if user not in logged_in:
-            abort(404)
-        returnvalue = {}
-        for uid in userids:
-            returnvalue[uid] = r.get(uid)
-        return jsonify(returnvalue)
+    user = request.values['user']
+    userids = request.values['userids']
+    print("username:",user)
+    if user not in logged_in:
+        abort(404)
+    returnvalue = {}
+    for uid in userids:
+        returnvalue[uid] = r.get(uid)
+    return jsonify(returnvalue)
+
+@app.route('/postmessages',methods=['POST'])
+def postmessages():
+    fromuser = request.values['fromuser']
+    touser = request.values['touser']
+    message = request.values['message']
+    if touser not in logged_in:
+        abort(404)
+    if r.lpush(touser,json.dumps({fromuser:message})) > 0 :
+        return jsonify(result='Success')
+    else:
+        return jsonify(result='Failure')
+
+@app.route('/getmessages',methods=['GET'])
+def getmessages():
+    user = request.values['user']
+    resp = {'messages': []}
+    if user not in logged_in:
+        abort(404)
+    while True:
+        data = r.rpop(user).decode()
+        if data is not None:
+            resp.append(data)
+        else
+            return jsonify(resp)
