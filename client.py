@@ -31,7 +31,7 @@ def print_new_msgs(usr_name):
     f = open(file_name, 'r')
     for line in f:
         if marker == 1:
-            print line
+            print(line)
             continue
         line_num = line_num + 1
         if (line=="MARKER\n") & (marker == 0) :
@@ -51,7 +51,7 @@ def print_new_msgs(usr_name):
     f = open(file_name, 'r')
     if marker == 0:
         for line in f:
-            print line
+            print(line)
     f.close()
 
     f = open(file_name, 'a')
