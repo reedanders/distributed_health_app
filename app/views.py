@@ -92,13 +92,13 @@ def postmessages():
 
 @app.route('/getmessages',methods=['GET'])
 def getmessages():
-    user = request.values['user']
+    user = str(request.values['user'])
     resp = {'messages': []}
     if user not in logged_in:
         abort(404)
     while True:
-        data = r.rpop(user).decode()
+        data = r.rpop(user)
         if data is not None:
-            resp.append(data)
-        else
+            resp['messages'].append(data.decode())
+        else:
             return jsonify(resp)
