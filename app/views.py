@@ -6,6 +6,8 @@ import json
 from app import app
 from featureMatrix import FeatureMatrix
 
+import querySpark
+
 registered_ids = {}
 logged_in=[]
 
@@ -24,11 +26,17 @@ def update():
         if user not in logged_in:
             abort(404)
         vector = np.fromstring(vector, dtype=float, sep=',')
-        fm = FeatureMatrix()
-        # nearest_neighbor = fm.match('A', np.array([.1,.2,.3,.5]))
-        nearest_neighbor = fm.match(user, vector)
+
+        if True:
+            fm = FeatureMatrix()
+            # nearest_neighbor = fm.match('A', np.array([.1,.2,.3,.5]))
+            nearest_neighbor = fm.match(user, vector)
+        else:
+            nearest_neighbor = querySpark.match(user, vector)
+
         return jsonify(result='Success',
                             neighbor=nearest_neighbor)
+
 
 @app.route('/login',methods=['POST'])
 def login():
