@@ -2,7 +2,7 @@
 
 Project for CSCI 5673
 
-Our application anonymizes this data and uses it to match people with similar health conditions together. Our design uses a Hybrid P2P approach to enable the peers to discover each other through data correlation techniques. These peers can share their health statistics for anonymous comparisons. We also allow them to form groups to allow peer-to-peer messaging or group broadcasts.
+Our application anonymizes this data and uses it to match people with similar health conditions together. Our design uses a Hybrid P2P approach to enable the peers to discover each other through data correlation techniques. These peers can share their health statistics for anonymous comparisons. We also allow them to form groups to allow messaging or group broadcasts.
 
 ## Local Setup
 
