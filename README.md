@@ -20,16 +20,14 @@ Start the Flask server in the virtual environment
 $ ./run.py
 ```
 
-### Interact with Server
+### Start Client
 
-In a new terminal window, run the following:
+Start the application client
 
 ```
-$ python3
->>> import requests
->>> response = requests.post('http://127.0.0.1:5000/update', data = {'user':'A', 'vector':'.1,.2,.3,.5'})
->>> response.json()
+$ ./client.py
 ```
+
 ## Cluster Setup
 
 Running this application with a Streaming Spark for large scale data processing requires that the Flask Server and Storm Master be on the same machine. Complete Java implementation for Spark is included in a tar file
